@@ -1,0 +1,50 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+contract Tracking {
+    struct Shipment {
+        string trackingNumber;
+        string date;
+        string status;
+        address owner;
+    }
+
+    mapping(string => Shipment) public shipments;
+    string[] public trackingNumbers;
+
+    event ShipmentAdded(string trackingNumber, string date, string status, address owner);
+    event ShipmentUpdated(string trackingNumber, string newStatus);
+
+    function addShipment(string memory _trackingNumber, string memory _date) public {
+        require(bytes(shipments[_trackingNumber].trackingNumber).length == 0, "Tracking number already exists");
+
+        shipments[_trackingNumber] = Shipment({
+            trackingNumber: _trackingNumber,
+            date: _date,
+            status: "Pending",
+            owner: msg.sender
+        });
+
+        trackingNumbers.push(_trackingNumber);
+        emit ShipmentAdded(_trackingNumber, _date, "Pending", msg.sender);
+    }
+
+    function updateStatus(string memory _trackingNumber, string memory _newStatus) public {
+        require(bytes(shipments[_trackingNumber].trackingNumber).length > 0, "Shipment not found");
+        require(msg.sender == shipments[_trackingNumber].owner, "Only owner can update status");
+
+        shipments[_trackingNumber].status = _newStatus;
+        emit ShipmentUpdated(_trackingNumber, _newStatus);
+    }
+
+    function getShipment(string memory _trackingNumber) public view returns (string memory, string memory, string memory, address) {
+        require(bytes(shipments[_trackingNumber].trackingNumber).length > 0, "Shipment not found");
+
+        Shipment memory shipment = shipments[_trackingNumber];
+        return (shipment.trackingNumber, shipment.date, shipment.status, shipment.owner);
+    }
+
+    function getAllTrackingNumbers() public view returns (string[] memory) {
+        return trackingNumbers;
+    }
+}
